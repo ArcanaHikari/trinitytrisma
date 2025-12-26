@@ -372,13 +372,46 @@
                 <div class="contact-form">
                     <h3>Form Pendaftaran Anggota Baru</h3>
                     <form id="registration-form" action="https://formspree.io/f/xkonnaqy" method="POST">
-    
+
+    <div id="form-status" role="status" aria-live="polite" class="form-status" style="display:none"></div>
+
+    <div class="form-group">
+        <label for="reg-name">Nama Lengkap *</label>
+        <input id="reg-name" name="name" type="text" required placeholder="Nama lengkap kamu">
+    </div>
+
+    <div class="form-group">
+        <label for="reg-email">Email *</label>
+        <input id="reg-email" name="email" type="email" required placeholder="email@domain.com">
+    </div>
+
+    <div class="form-group">
+        <label for="reg-phone">Nomor Telepon</label>
+        <input id="reg-phone" name="phone" type="tel" placeholder="+62">
+    </div>
+
+    <div class="form-group">
+        <label for="reg-grade">Kelas</label>
+        <select id="reg-grade" name="grade">
+            <option value="">Pilih kelas (opsional)</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="reg-message">Pesan / Catatan</label>
+        <textarea id="reg-message" name="message" rows="3" placeholder="Kenapa ingin gabung?"></textarea>
+    </div>
+
     <input type="hidden" name="_next" value="https://arcanahikari.github.io/trinitytrisma/thanks.html">
     <input type="hidden" name="_subject" value="Pendaftaran Baru Trinity Trisma!">
 
     <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+    <p class="form-note" style="margin-top:0.5rem;font-size:0.9rem;color:var(--text-light)">Dengan mengisi formulir, kami akan menghubungi kamu via email atau WA sesuai data yang dikirim.</p>
 </form>
-                </div>
+                </div> 
             </div>
         </div>
     </section>

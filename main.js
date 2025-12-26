@@ -379,6 +379,89 @@ function showResult() {
     }
 }
 
+// Registration form: AJAX submission to Formspree (Accept: application/json), show in-page status, fallback to normal submit
+const regForm = document.getElementById('registration-form');
+if (regForm) {
+    const statusEl = document.getElementById('form-status');
+    regForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Use browser validity first
+        if (!regForm.checkValidity()) {
+            regForm.reportValidity();
+            return;
+        }
+
+        const action = regForm.action;
+        const nextInputVal = regForm.querySelector('input[name="_next"]')?.value;
+        const submitBtn = regForm.querySelector('button[type="submit"]');
+
+        // Disable submit while sending
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-disabled', 'true');
+        }
+
+        try {
+            const formData = new FormData(regForm);
+            const res = await fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: { Accept: 'application/json' }
+            });
+
+            // Try parsing json for server-provided next
+            const json = await res.json().catch(() => null);
+
+            if (res.ok) {
+                if (statusEl) {
+                    statusEl.className = 'form-status success';
+                    statusEl.textContent = 'Pendaftaran berhasil — Terima kasih! Mengalihkan…';
+                    statusEl.style.display = 'block';
+                } else {
+                    alert('Pendaftaran berhasil — Terima kasih!');
+                }
+
+                // Prefer the form's hidden _next value (full URL) when set, otherwise use server-sent next
+                const serverNext = json && json.next ? new URL(json.next, location.origin).href : null;
+                const redirectTarget = nextInputVal || serverNext || null;
+
+                setTimeout(() => {
+                    if (redirectTarget) location.href = redirectTarget;
+                    else location.reload();
+                }, 1100);
+            } else {
+                const msg = (json && json.error) ? json.error : 'Terjadi kesalahan pada pengiriman. Mengalihkan untuk mengirim secara normal...';
+                if (statusEl) {
+                    statusEl.className = 'form-status error';
+                    statusEl.textContent = msg;
+                    statusEl.style.display = 'block';
+                } else {
+                    alert(msg);
+                }
+                // Re-enable then fallback submit
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('aria-disabled');
+                }
+                setTimeout(() => regForm.submit(), 800);
+            }
+        } catch (err) {
+            console.error('Registration submit failed', err);
+            if (statusEl) {
+                statusEl.className = 'form-status error';
+                statusEl.textContent = 'Tidak dapat mengirim (koneksi). Mengirim biasa...';
+                statusEl.style.display = 'block';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.removeAttribute('aria-disabled');
+            }
+            setTimeout(() => regForm.submit(), 800);
+        }
+    });
+}
+
 // Back-to-top button: guard and use event listeners (avoid overwriting global onscroll)
 const backToTop = document.getElementById('backToTop');
 if (backToTop) {
