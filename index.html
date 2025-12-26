@@ -180,6 +180,14 @@
                     <p>Skor Akhir Kamu:</p>
                     <div class="final-score" id="final-score">0</div>
                     <p id="result-message">Hebat!</p>
+
+                    <!-- Leaderboard (ditampilkan setelah permainan) -->
+                    <div id="leaderboard" class="leaderboard" style="margin-top:1.25rem;text-align:left;">
+                        <h4 style="margin-bottom:0.5rem;">Leaderboard</h4>
+                        <ol id="leaderboard-list" style="padding-left:1.25rem;margin-bottom:0.75rem;"></ol>
+                        <button id="save-score-btn" class="btn btn-secondary" style="display:none;">Simpan Skor</button>
+                    </div>
+
                     <button class="btn btn-primary" onclick="showStartScreen()">Pilih Level Lain</button>
                 </div>
 
@@ -294,31 +302,31 @@
             <h2 class="section-title">Sering Ditanyakan (FAQ)</h2>
             <div class="faq-container">
                 <div class="faq-item">
-                    <div class="faq-question">
+                    <div class="faq-question" tabindex="0" role="button" aria-expanded="false" aria-controls="faq-answer-1">
                         <h3>Apakah harus punya laptop sendiri?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="faq-answer">
+                    <div id="faq-answer-1" class="faq-answer">
                         <p>Idealnya iya, agar bisa praktik di rumah. Tapi kalau belum ada, sekolah menyediakan Lab Komputer saat kegiatan berlangsung.</p>
                     </div>
                 </div>
                 
                 <div class="faq-item">
-                    <div class="faq-question">
+                    <div class="faq-question" tabindex="0" role="button" aria-expanded="false" aria-controls="faq-answer-2">
                         <h3>Saya gaptek & belum bisa koding, boleh gabung?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="faq-answer">
+                    <div id="faq-answer-2" class="faq-answer">
                         <p>Sangat boleh! Justru Trinity Trisma ada untuk membimbing dari NOL. Yang penting kamu punya niat belajar.</p>
                     </div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">
+                    <div class="faq-question" tabindex="0" role="button" aria-expanded="false" aria-controls="faq-answer-3">
                         <h3>Kapan jadwal kumpulnya?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="faq-answer">
+                    <div id="faq-answer-3" class="faq-answer">
                         <p>Jadwal rutin kami setiap hari Sabtu, pukul 10.30 - 13.00 WITA di Lab Komputer SMAN 3 Denpasar.</p>
                     </div>
                 </div>
@@ -363,37 +371,13 @@
                 </div>
                 <div class="contact-form">
                     <h3>Form Pendaftaran Anggota Baru</h3>
-                    <form id="registration-form">
-                        <div class="form-group">
-                            <label for="name">Nama Lengkap</label>
-                            <input type="text" id="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="kelas">Kelas</label>
-                            <input type="text" id="kelas" placeholder="Contoh: X IPA 1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="interest">Minat Bidang</label>
-                            <select id="interest" required>
-                                <option value="">Pilih Minat</option>
-                                <option value="web">Web Development</option>
-                                <option value="mobile">Mobile Development</option>
-                                <option value="python">Python Programming</option>
-                                <option value="cpp">C/C++ Programming</option>
-                                <option value="cyber">Cyber Security</option>
-                                <option value="uiux">UI/UX Design</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Alasan Bergabung</label>
-                            <textarea id="message" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
-                    </form>
+                    <form id="registration-form" action="https://formspree.io/f/xkonnaqy" method="POST">
+    
+    <input type="hidden" name="_next" value="https://arcanahikari.github.io/trinitytrisma/thanks.html">
+    <input type="hidden" name="_subject" value="Pendaftaran Baru Trinity Trisma!">
+
+    <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+</form>
                 </div>
             </div>
         </div>
@@ -437,6 +421,8 @@
             </div>
         </div>
     </footer>
+
+<button id="backToTop" title="Ke Atas" aria-label="Ke Atas"><i class="fas fa-arrow-up"></i></button>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="main.js"></script>

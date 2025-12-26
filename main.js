@@ -1,9 +1,16 @@
 // --- 0. INISIALISASI ANIMASI (AOS) ---
-        AOS.init({
-            duration: 800, // Durasi animasi 0.8 detik
-            once: true,    // Animasi cuma sekali saat scroll ke bawah
-            offset: 100    // Jarak trigger animasi
-        });
+        const initAOS = () => {
+            if (window.AOS && typeof AOS.init === 'function') {
+                AOS.init({
+                    duration: 800, // Durasi animasi 0.8 detik
+                    once: true,    // Animasi cuma sekali saat scroll ke bawah
+                    offset: 100    // Jarak trigger animasi
+                });
+            }
+        };
+        // Try init now; if the lib loads later, also init on load
+        initAOS();
+        window.addEventListener('load', initAOS);
 
         // --- 1. NAVIGASI MOBILE ---
         document.querySelector('.menu-toggle').addEventListener('click', function() {
@@ -26,41 +33,42 @@
             });
         });
 
-        // --- 2. FITUR KIRIM KE WHATSAPP ---
-        const form = document.getElementById('registration-form');
-        if(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Ambil data dari input
-                const nama = document.getElementById('name').value;
-                const kelas = document.getElementById('kelas').value;
-                const minat = document.getElementById('interest').value;
-                const alasan = document.getElementById('message').value;
-
-                // Nomor WA Admin (Ganti dengan nomor aslimu, format 62...)
-                const nomorWA = "6281805515828"; 
-
-                // Format Pesan
-                const text = `Halo Admin Trinity Trisma!%0A%0ASaya ingin mendaftar:%0ANama: ${nama}%0AKelas: ${kelas}%0AMinat: ${minat}%0AAlasan: ${alasan}%0A%0AMohon infonya lebih lanjut. Terima kasih!`;
-
-                // Buka Link WA
-                window.open(`https://wa.me/${nomorWA}?text=${text}`, '_blank');
-            });
-        }
-
-        // --- 3. LOGIKA FAQ (AKORDEON) ---
+        // --- 3. LOGIKA FAQ (AKORDEON) with a11y ---
         const faqItems = document.querySelectorAll('.faq-item');
         faqItems.forEach(item => {
             const question = item.querySelector('.faq-question');
-            question.addEventListener('click', () => {
-                // Tutup yang lain dulu (opsional, biar rapi)
-                faqItems.forEach(otherItem => {
-                    if (otherItem !== item) otherItem.classList.remove('active');
+            const answer = item.querySelector('.faq-answer');
+
+            // Ensure accessible attributes exist
+            if (question && answer) {
+                // If answer doesn't have an id (added in HTML), give it a stable id
+                if (!answer.id) answer.id = `faq-answer-${Math.random().toString(36).slice(2,8)}`;
+                question.setAttribute('tabindex', '0');
+                question.setAttribute('role', 'button');
+                question.setAttribute('aria-controls', answer.id);
+                question.setAttribute('aria-expanded', item.classList.contains('active') ? 'true' : 'false');
+
+                const toggle = () => {
+                    // Close others
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.classList.remove('active');
+                            const q = otherItem.querySelector('.faq-question');
+                            if (q) q.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    item.classList.toggle('active');
+                    question.setAttribute('aria-expanded', item.classList.contains('active') ? 'true' : 'false');
+                };
+
+                question.addEventListener('click', toggle);
+                question.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggle();
+                    }
                 });
-                // Toggle yang diklik
-                item.classList.toggle('active');
-            });
+            }
         });
 
 // (Deduplicated) removed duplicate nav/form listeners — the primary handlers remain earlier in the file (e.g., WhatsApp form submit handler).
@@ -170,6 +178,13 @@ function showStartScreen() {
     if(questionScreen) questionScreen.classList.remove('active');
     if(resultScreen) resultScreen.classList.remove('active');
     if(startScreen) startScreen.classList.add('active');
+
+    // Hide any lingering save button and clear handler when returning to start
+    const saveBtn = document.getElementById('save-score-btn');
+    if (saveBtn) {
+        saveBtn.style.display = 'none';
+        saveBtn.onclick = null;
+    }
 }
 
 function startLevel(difficulty) {
@@ -278,32 +293,105 @@ function nextQuestionDelay() {
 function showResult() {
     questionScreen.classList.remove('active');
     resultScreen.classList.add('active');
-    
+
+    // Show final score
     const finalScoreEl = document.getElementById('final-score');
+    if (finalScoreEl) finalScoreEl.innerText = score;
+
     const msgEl = document.getElementById('result-message');
-    
-    let tempScore = 0;
-    if(finalScoreEl) {
-        // Skip animasi jika score 0 agar tidak infinite loop
-        if (score === 0) {
-            finalScoreEl.innerText = 0;
-        } else {
-            const scoreInterval = setInterval(() => {
-                if(tempScore < score) {
-                    tempScore++;
-                    finalScoreEl.innerText = tempScore;
-                } else {
-                    finalScoreEl.innerText = score;
-                    clearInterval(scoreInterval);
-                }
-            }, 20);
-        }
+    if (msgEl) {
+        msgEl.innerHTML = '';
+        msgEl.innerHTML += `<div>Skor Kamu: <strong>${score}</strong></div>`;
+
+        if (score >= 80) msgEl.innerHTML += `<div>Sempurna! Kamu siap ikut lomba! 🏆</div>`;
+        else if (score >= 60) msgEl.innerHTML += `<div>Bagus sekali! Tingkatkan lagi.</div>`;
+        else msgEl.innerHTML += `<div>Jangan menyerah, ayo belajar lagi!</div>`;
     }
 
-    if(msgEl) {
-        if(score >= 80) msgEl.innerText = "Sempurna! Kamu siap ikut lomba! 🏆";
-        else if(score >= 60) msgEl.innerText = "Bagus sekali! Tingkatkan lagi.";
-        else msgEl.innerText = "Jangan menyerah, ayo belajar lagi!";
+    // --- Leaderboard: persist top 5 scores in localStorage ---
+    const leaderboardListEl = document.getElementById('leaderboard-list');
+    const saveBtn = document.getElementById('save-score-btn');
+
+    const getLeaderboard = () => {
+        try {
+            return JSON.parse(localStorage.getItem('trinityLeaderboard') || '[]');
+        } catch (e) {
+            console.warn('trinityLeaderboard parse error, clearing localStorage key', e);
+            localStorage.removeItem('trinityLeaderboard');
+            return [];
+        }
+    };
+    const setLeaderboard = (arr) => localStorage.setItem('trinityLeaderboard', JSON.stringify(arr));
+
+    const renderLeaderboard = () => {
+        const list = getLeaderboard();
+        if (!leaderboardListEl) return;
+        leaderboardListEl.innerHTML = '';
+        if (list.length === 0) {
+            leaderboardListEl.innerHTML = '<li>Tidak ada skor tersimpan.</li>';
+            return;
+        }
+        list.forEach(entry => {
+            const li = document.createElement('li');
+            li.innerText = `${entry.name} — ${entry.score} (${entry.date})`;
+            leaderboardListEl.appendChild(li);
+        });
+    };
+
+    // Check if current score qualifies to be saved
+    const qualifies = () => {
+        const list = getLeaderboard();
+        if (list.length < 5) return true;
+        return score > list[list.length - 1].score;
+    };
+
+    // Save score flow
+    const saveScoreFlow = () => {
+        const name = prompt('Simpan skor! Masukkan nama/inisial (max 20 karakter):', 'Anon');
+        if (!name) return;
+        const entry = { name: String(name).slice(0,20), score: score, date: new Date().toLocaleDateString() };
+        const list = getLeaderboard();
+        list.push(entry);
+        list.sort((a,b) => b.score - a.score);
+        const top = list.slice(0,5);
+        setLeaderboard(top);
+        renderLeaderboard();
+        if (saveBtn) {
+            saveBtn.style.display = 'none';
+            saveBtn.onclick = null;
+        }
+        alert('Skor tersimpan di leaderboard!');
+    };
+
+    // Render existing leaderboard and show save button conditionally
+    renderLeaderboard();
+    if (score > 0 && qualifies()) {
+        if (saveBtn) {
+            saveBtn.style.display = 'inline-block';
+            // Use assignment to avoid duplicate listeners when showResult runs multiple times
+            saveBtn.onclick = saveScoreFlow;
+        }
+    } else {
+        if (saveBtn) {
+            saveBtn.style.display = 'none';
+            saveBtn.onclick = null;
+        }
     }
 }
 
+// Back-to-top button: guard and use event listeners (avoid overwriting global onscroll)
+const backToTop = document.getElementById('backToTop');
+if (backToTop) {
+    const updateBackToTop = () => {
+        if (window.scrollY > 300) backToTop.style.display = 'block';
+        else backToTop.style.display = 'none';
+    };
+
+    // Initialize and listen for scroll changes
+    window.addEventListener('scroll', updateBackToTop, { passive: true });
+    window.addEventListener('load', updateBackToTop);
+
+    backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
