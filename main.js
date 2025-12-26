@@ -1,34 +1,69 @@
-// --- 1. NAVIGASI MOBILE ---
-document.querySelector('.menu-toggle').addEventListener('click', function() {
-    document.querySelector('nav ul').classList.toggle('active');
-});
+// --- 0. INISIALISASI ANIMASI (AOS) ---
+        AOS.init({
+            duration: 800, // Durasi animasi 0.8 detik
+            once: true,    // Animasi cuma sekali saat scroll ke bawah
+            offset: 100    // Jarak trigger animasi
+        });
 
-// Smooth scrolling
-document.querySelectorAll('nav a').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-        
-        if (targetElement) {
-            window.scrollTo({
-                top: targetElement.offsetTop - 70,
-                behavior: 'smooth'
+        // --- 1. NAVIGASI MOBILE ---
+        document.querySelector('.menu-toggle').addEventListener('click', function() {
+            document.querySelector('nav ul').classList.toggle('active');
+        });
+
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 70,
+                        behavior: 'smooth'
+                    });
+                    document.querySelector('nav ul').classList.remove('active');
+                }
             });
-            document.querySelector('nav ul').classList.remove('active');
-        }
-    });
-});
+        });
 
-// Form submission
-const form = document.getElementById('registration-form');
-if(form) {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        alert('Terima kasih! Pendaftaran Anda telah berhasil dikirim.');
-        this.reset();
-    });
-}
+        // --- 2. FITUR KIRIM KE WHATSAPP ---
+        const form = document.getElementById('registration-form');
+        if(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Ambil data dari input
+                const nama = document.getElementById('name').value;
+                const kelas = document.getElementById('kelas').value;
+                const minat = document.getElementById('interest').value;
+                const alasan = document.getElementById('message').value;
+
+                // Nomor WA Admin (Ganti dengan nomor aslimu, format 62...)
+                const nomorWA = "6281805515828"; 
+
+                // Format Pesan
+                const text = `Halo Admin Trinity Trisma!%0A%0ASaya ingin mendaftar:%0ANama: ${nama}%0AKelas: ${kelas}%0AMinat: ${minat}%0AAlasan: ${alasan}%0A%0AMohon infonya lebih lanjut. Terima kasih!`;
+
+                // Buka Link WA
+                window.open(`https://wa.me/${nomorWA}?text=${text}`, '_blank');
+            });
+        }
+
+        // --- 3. LOGIKA FAQ (AKORDEON) ---
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                // Tutup yang lain dulu (opsional, biar rapi)
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item) otherItem.classList.remove('active');
+                });
+                // Toggle yang diklik
+                item.classList.toggle('active');
+            });
+        });
+
+// (Deduplicated) removed duplicate nav/form listeners — the primary handlers remain earlier in the file (e.g., WhatsApp form submit handler).
 
 // --- 2. LOGIKA DARK MODE ---
 const themeBtn = document.getElementById('theme-toggle');
@@ -271,3 +306,4 @@ function showResult() {
         else msgEl.innerText = "Jangan menyerah, ayo belajar lagi!";
     }
 }
+
