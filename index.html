@@ -195,6 +195,17 @@
         </div>
     </section>
 
+    <!-- Global leaderboard (Firebase) -->
+    <div class="container" style="max-width:650px; margin-top:1.5rem;">
+        <div class="leaderboard-box" style="background:white;padding:1.25rem;border-radius:8px;box-shadow:var(--shadow)">
+            <h3>🏆 Top 5 Global Rank</h3>
+            <ul id="global-leaderboard-list" style="padding-left:1.25rem; margin-top:0.5rem;"> 
+                <li>Belum ada data...</li>
+            </ul>
+            <button id="refresh-global-leaderboard" class="btn btn-secondary" style="margin-top:10px;">Refresh Rank</button>
+        </div>
+    </div>
+
     <section id="members">
         <div class="container">
             <h2 class="section-title">Pengurus Inti</h2>
@@ -373,44 +384,60 @@
                     <h3>Form Pendaftaran Anggota Baru</h3>
                     <form id="registration-form" action="https://formspree.io/f/xkonnaqy" method="POST">
 
+    <!-- Honeypot field to trap bots -->
+    <input type="text" name="_gotcha" style="display:none !important" aria-hidden="true">
+
     <div id="form-status" role="status" aria-live="polite" class="form-status" style="display:none"></div>
 
     <div class="form-group">
-        <label for="reg-name">Nama Lengkap *</label>
-        <input id="reg-name" name="name" type="text" required placeholder="Nama lengkap kamu">
+        <label for="name">Nama Lengkap *</label>
+        <input id="name" name="nama" type="text" required placeholder="Nama lengkap kamu">
     </div>
 
     <div class="form-group">
-        <label for="reg-email">Email *</label>
-        <input id="reg-email" name="email" type="email" required placeholder="email@domain.com">
+        <label for="email">Email Siswa *</label>
+        <input id="email" name="email" type="email" required placeholder="email@domain.com">
     </div>
 
     <div class="form-group">
-        <label for="reg-phone">Nomor Telepon</label>
-        <input id="reg-phone" name="phone" type="tel" placeholder="+62">
+        <label for="kelas">Kelas *</label>
+        <input id="kelas" name="kelas" type="text" required placeholder="Contoh: X IPA 1">
     </div>
 
     <div class="form-group">
-        <label for="reg-grade">Kelas</label>
-        <select id="reg-grade" name="grade">
-            <option value="">Pilih kelas (opsional)</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
+        <label for="interest">Minat Bidang *</label>
+        <select id="interest" name="minat" required>
+            <option value="">Pilih Minat</option>
+            <option value="web">Web Development</option>
+            <option value="mobile">Mobile Development</option>
+            <option value="python">Python Programming</option>
+            <option value="cpp">C/C++ Programming</option>
+            <option value="cyber">Cyber Security</option>
+            <option value="uiux">UI/UX Design</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label for="reg-message">Pesan / Catatan</label>
-        <textarea id="reg-message" name="message" rows="3" placeholder="Kenapa ingin gabung?"></textarea>
+        <label for="message">Alasan Bergabung *</label>
+        <textarea id="message" name="alasan" rows="3" required placeholder="Kenapa ingin bergabung?"></textarea>
     </div>
 
-    <input type="hidden" name="_next" value="https://arcanahikari.github.io/trinitytrisma/thanks.html">
-    <input type="hidden" name="_subject" value="Pendaftaran Baru Trinity Trisma!">
+    <input type="hidden" name="_subject" value="Pendaftaran Baru Trinity Trisma">
 
-    <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+    <button type="submit" id="form-btn" class="btn btn-primary">Kirim Pendaftaran</button>
     <p class="form-note" style="margin-top:0.5rem;font-size:0.9rem;color:var(--text-light)">Dengan mengisi formulir, kami akan menghubungi kamu via email atau WA sesuai data yang dikirim.</p>
 </form>
+
+<!-- Success Modal (hidden by default) -->
+<div id="success-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+    <div class="modal-content">
+        <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+        <h3 id="modal-title">Pendaftaran Berhasil!</h3>
+        <p>Terima kasih sudah mendaftar. Silakan cek email kamu secara berkala untuk info selanjutnya.</p>
+        <button id="close-modal" class="btn btn-primary">Siap!</button>
+    </div>
+</div>
+
                 </div> 
             </div>
         </div>
@@ -458,6 +485,11 @@
 <button id="backToTop" title="Ke Atas" aria-label="Ke Atas"><i class="fas fa-arrow-up"></i></button>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Firebase (compat) for simple Firestore leaderboard (optional) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <script src="main.js"></script>
 </body>
 </html> 

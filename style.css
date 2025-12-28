@@ -391,6 +391,60 @@ body.dark-mode .section-title {
 .form-status.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 .form-note { color: var(--text-light); }
 
+/* --- 14. SUCCESS MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none; /* Sembunyi default */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: var(--bg-body);
+    padding: 2.5rem;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+.modal-icon {
+    font-size: 4rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+.modal-content h3 {
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+.modal-content p {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+/* Accessibility Focus Ring */
+button:focus-visible, 
+a:focus-visible, 
+input:focus-visible, 
+select:focus-visible, 
+textarea:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
 
 /* Footer */
 footer {

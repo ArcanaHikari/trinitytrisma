@@ -379,10 +379,13 @@ function showResult() {
     }
 }
 
-// Registration form: AJAX submission to Formspree (Accept: application/json), show in-page status, fallback to normal submit
+// Registration form: AJAX submission to Formspree (Accept: application/json), show in-page modal, and honeypot handling
 const regForm = document.getElementById('registration-form');
 if (regForm) {
     const statusEl = document.getElementById('form-status');
+    const modal = document.getElementById('success-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+
     regForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -393,45 +396,61 @@ if (regForm) {
         }
 
         const action = regForm.action;
-        const nextInputVal = regForm.querySelector('input[name="_next"]')?.value;
         const submitBtn = regForm.querySelector('button[type="submit"]');
 
         // Disable submit while sending
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.setAttribute('aria-disabled', 'true');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
         }
 
         try {
             const formData = new FormData(regForm);
+
+            // Honeypot check: if filled, treat as spam and silently succeed
+            if (formData.get('_gotcha')) {
+                if (statusEl) {
+                    statusEl.className = 'form-status success';
+                    statusEl.textContent = 'Pendaftaran berhasil — Terima kasih!';
+                    statusEl.style.display = 'block';
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('aria-disabled');
+                    submitBtn.innerHTML = 'Kirim Pendaftaran';
+                }
+                return;
+            }
+
             const res = await fetch(action, {
-                method: 'POST',
+                method: regForm.method || 'POST',
                 body: formData,
                 headers: { Accept: 'application/json' }
             });
 
-            // Try parsing json for server-provided next
             const json = await res.json().catch(() => null);
 
             if (res.ok) {
+                // Show success modal (stay on page)
+                regForm.reset();
+                if (modal) {
+                    modal.classList.add('active');
+                    modal.setAttribute('aria-hidden', 'false');
+                }
                 if (statusEl) {
                     statusEl.className = 'form-status success';
-                    statusEl.textContent = 'Pendaftaran berhasil — Terima kasih! Mengalihkan…';
+                    statusEl.textContent = 'Pendaftaran berhasil — Terima kasih!';
                     statusEl.style.display = 'block';
-                } else {
-                    alert('Pendaftaran berhasil — Terima kasih!');
                 }
 
-                // Prefer the form's hidden _next value (full URL) when set, otherwise use server-sent next
-                const serverNext = json && json.next ? new URL(json.next, location.origin).href : null;
-                const redirectTarget = nextInputVal || serverNext || null;
+                // Optional: If server provides a full next, you may prefer redirect; (we prefer modal by default)
+                // If you still want redirect, use: const redirectTarget = json && json.next ? new URL(json.next, location.origin).href : null;
 
-                setTimeout(() => {
-                    if (redirectTarget) location.href = redirectTarget;
-                    else location.reload();
-                }, 1100);
+                // If Firebase is available, refresh global leaderboard
+                if (typeof loadGlobalLeaderboard === 'function') loadGlobalLeaderboard();
             } else {
-                const msg = (json && json.error) ? json.error : 'Terjadi kesalahan pada pengiriman. Mengalihkan untuk mengirim secara normal...';
+                const msg = (json && json.error) ? json.error : 'Oops! Ada masalah saat mengirim form.';
                 if (statusEl) {
                     statusEl.className = 'form-status error';
                     statusEl.textContent = msg;
@@ -439,28 +458,92 @@ if (regForm) {
                 } else {
                     alert(msg);
                 }
-                // Re-enable then fallback submit
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.removeAttribute('aria-disabled');
-                }
-                setTimeout(() => regForm.submit(), 800);
             }
         } catch (err) {
             console.error('Registration submit failed', err);
             if (statusEl) {
                 statusEl.className = 'form-status error';
-                statusEl.textContent = 'Tidak dapat mengirim (koneksi). Mengirim biasa...';
+                statusEl.textContent = 'Tidak dapat mengirim (koneksi). Coba lagi.';
                 statusEl.style.display = 'block';
             }
+        } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.removeAttribute('aria-disabled');
+                submitBtn.innerHTML = 'Kirim Pendaftaran';
             }
-            setTimeout(() => regForm.submit(), 800);
         }
     });
+
+    // Modal close handler
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            if (modal) {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        });
+    }
 }
+
+// --- Firebase (optional) - init and leaderboard helpers ---
+// Paste config from Firebase console; we guard initialization so site still works without it.
+const firebaseConfig = {
+  apiKey: "AIzaSyAePSJN0D_beXx2Xx4ywnKmnI4NO67rdRY",
+  authDomain: "trinitytrisma.firebaseapp.com",
+  projectId: "trinitytrisma",
+  storageBucket: "trinitytrisma.firebasestorage.app",
+  messagingSenderId: "782129818220",
+  appId: "1:782129818220:web:30d4272eedba4b79438649",
+  measurementId: "G-D0XP1KTCT3"
+};
+
+let db = null;
+if (typeof firebase !== 'undefined') {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log('Firebase initialized');
+    } catch (e) {
+        console.warn('Firebase init error', e);
+        db = null;
+    }
+}
+
+// Load top 5 global leaderboard (Firestore)
+async function loadGlobalLeaderboard() {
+    const listEl = document.getElementById('global-leaderboard-list');
+    if (!listEl) return;
+    if (!db) {
+        listEl.innerHTML = '<li>Global leaderboard belum tersedia.</li>';
+        return;
+    }
+
+    listEl.innerHTML = '<li>Loading...</li>';
+    try {
+        const snap = await db.collection('leaderboard').orderBy('score', 'desc').limit(5).get();
+        if (snap.empty) {
+            listEl.innerHTML = '<li>Belum ada data...</li>';
+            return;
+        }
+        listEl.innerHTML = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${d.name || 'Anon'}</span> — <strong>${d.score}</strong>`;
+            listEl.appendChild(li);
+        });
+    } catch (err) {
+        console.error('loadGlobalLeaderboard error', err);
+        listEl.innerHTML = '<li>Gagal memuat data leaderboard.</li>';
+    }
+}
+
+// Hook refresh button
+const refreshGlobalBtn = document.getElementById('refresh-global-leaderboard');
+if (refreshGlobalBtn) refreshGlobalBtn.addEventListener('click', loadGlobalLeaderboard);
+// Auto-load on init if Firestore is available
+if (db) loadGlobalLeaderboard();
 
 // Back-to-top button: guard and use event listeners (avoid overwriting global onscroll)
 const backToTop = document.getElementById('backToTop');
