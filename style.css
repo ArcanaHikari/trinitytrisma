@@ -404,6 +404,26 @@ body.dark-mode .section-title {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
+
+/* Global Leaderboard box */
+.leaderboard-container { max-width: 650px; margin-top: 1.5rem; }
+.leaderboard-box {
+    background-color: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    color: var(--text);
+}
+.leaderboard-box h3 { margin: 0 0 0.5rem; color: var(--accent); }
+.leaderboard-box ul { margin: 0; padding-left: 1rem; }
+.leaderboard-box li { margin-bottom: 0.5rem; }
+
+body.dark-mode .leaderboard-box {
+    background-color: #1e272e;
+    border: 1px solid #34495e;
+    color: var(--text);
+}
+body.dark-mode .leaderboard-box h3 { color: var(--accent); }
 .modal-overlay.active {
     display: flex;
     opacity: 1;
